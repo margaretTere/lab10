@@ -1,61 +1,66 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(CurrencyConverterApp());
+  runApp(MyApp());
 }
 
-class CurrencyConverterApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Currency Converter',
-      home: CurrencyInputScreen(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: HomeScreen(),
     );
   }
 }
 
-class CurrencyInputScreen extends StatefulWidget {
-  @override
-  _CurrencyInputScreenState createState() => _CurrencyInputScreenState();
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _CurrencyInputScreenState extends State<CurrencyInputScreen> {
-  final TextEditingController usdController = TextEditingController();
-  final TextEditingController cadController = TextEditingController();
-  final double exchangeRate = 1.35;
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _usdController = TextEditingController();
+  final TextEditingController _cadController = TextEditingController();
+  final double _exchangeRate = 1.35;
 
-  bool _isEditingUsd = false;
-  bool _isEditingCad = false;
+  bool isTypingUsd = false;
+  bool isTypingCad = false;
 
-  void _onUsdChanged(String value) {
-    if (_isEditingCad) return;
+  void convertFromUsd(String value) {
+    if (isTypingCad) return;
     setState(() {
-      _isEditingUsd = true;
-      double usd = double.tryParse(value) ?? 0;
-      cadController.text = (usd * exchangeRate).toStringAsFixed(2);
-      _isEditingUsd = false;
+      isTypingUsd = true;
+      final usd = double.tryParse(value) ?? 0;
+      _cadController.text = (usd * _exchangeRate).toStringAsFixed(2);
+      isTypingUsd = false;
     });
   }
 
-  void _onCadChanged(String value) {
-    if (_isEditingUsd) return;
+  void convertFromCad(String value) {
+    if (isTypingUsd) return;
     setState(() {
-      _isEditingCad = true;
-      double cad = double.tryParse(value) ?? 0;
-      usdController.text = (cad / exchangeRate).toStringAsFixed(2);
-      _isEditingCad = false;
+      isTypingCad = true;
+      final cad = double.tryParse(value) ?? 0;
+      _usdController.text = (cad / _exchangeRate).toStringAsFixed(2);
+      isTypingCad = false;
     });
   }
 
-  void _navigateToSummary() {
+  void _navigateToBreakDownPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ConversionSummaryScreen(
-          usd: usdController.text,
-          cad: cadController.text,
-          rate: exchangeRate,
+        builder: (_) => BreakDownPage(
+          usd: _usdController.text,
+          cad: _cadController.text,
+          rate: _exchangeRate,
         ),
       ),
     );
@@ -66,25 +71,25 @@ class _CurrencyInputScreenState extends State<CurrencyInputScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Currency Converter')),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             TextField(
-              controller: usdController,
+              controller: _usdController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(labelText: 'USD'),
-              onChanged: _onUsdChanged,
+              decoration: InputDecoration(labelText: 'USD Amount'),
+              onChanged: convertFromUsd,
             ),
             TextField(
-              controller: cadController,
+              controller: _cadController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(labelText: 'CAD'),
-              onChanged: _onCadChanged,
+              decoration: InputDecoration(labelText: 'CAD Amount'),
+              onChanged: convertFromCad,
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _navigateToSummary,
-              child: Text('See Summary'),
+              onPressed: _navigateToBreakDownPage,
+              child: Text('See Breakdown'),
             ),
           ],
         ),
@@ -93,29 +98,30 @@ class _CurrencyInputScreenState extends State<CurrencyInputScreen> {
   }
 }
 
-class ConversionSummaryScreen extends StatelessWidget {
-  final String usd;
-  final String cad;
-  final double rate;
+class BreakDownPage extends StatelessWidget {
+  final String _usd;
+  final String _cad;
+  final double _rate;
 
-  const ConversionSummaryScreen({
-    required this.usd,
-    required this.cad,
-    required this.rate,
-  });
+  const BreakDownPage({
+    required String usd,
+    required String cad,
+    required double rate,
+  }) : _rate = rate, _cad = cad, _usd = usd;
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Conversion Summary')),
+      appBar: AppBar(title: Text('Transaction break down')),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('USD: \$${usd}', style: TextStyle(fontSize: 18)),
-            Text('CAD: \$${cad}', style: TextStyle(fontSize: 18)),
-            Text('Exchange Rate: 1 USD = $rate CAD', style: TextStyle(fontSize: 18)),
+            Text('USD: \$${_usd}', style: TextStyle(fontSize: 18)),
+            Text('CAD: \$${_cad}', style: TextStyle(fontSize: 18)),
+            Text('Exchange Rate: 1.0 USD = $_rate CAD', style: TextStyle(fontSize: 18)),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
@@ -127,3 +133,4 @@ class ConversionSummaryScreen extends StatelessWidget {
     );
   }
 }
+
